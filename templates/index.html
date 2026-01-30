@@ -5,7 +5,20 @@
     <title>Cariotipo Viewer</title>
 </head>
 <body>
+
     <h1>Visualización de cariotipo</h1>
-    <p>Interfaz para visualizar el procesamiento de imágenes</p>
+
+    <form method="POST" enctype="multipart/form-data">
+        <input type="file" name="image" accept="image/*" required>
+        <button type="submit">Subir imagen</button>
+    </form>
+
+    {% if image_filename %}
+        <h2>Imagen cargada:</h2>
+        <img src="{{ url_for('static', filename='uploads/' + image_filename) }}"
+             alt="Cariotipo"
+             style="max-width: 800px; border: 1px solid black;">
+    {% endif %}
+
 </body>
 </html>
