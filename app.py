@@ -3,8 +3,8 @@ from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# Carpeta donde se guardan las imágenes
-UPLOAD_FOLDER = "static/uploads"
+UPLOAD_FOLDER = os.path.join(app.root_path, "static", "uploads")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 
