@@ -1,1 +1,7 @@
 Flask>=2.2,<3.0
+opencv-python
+matplotlib
+torch
+torchvision
+# Detectron2: install separately per your CUDA/PyTorch:
+# see https://detectron2.readthedocs.io/en/latest/tutorials/install.html

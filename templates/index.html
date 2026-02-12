@@ -12,23 +12,42 @@
         input[type="file"] { padding:6px; }
         button { background:#0078d4; color:white; border:none; padding:10px 16px; border-radius:6px; cursor:pointer; }
         img { max-width:100%; margin-top:12px; border:1px solid #ddd; border-radius:4px; }
+        .note { color:#c00; margin-top:8px; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Automatic Karyotype</h1>
-        <p>Upload a karyotype image to visualize it.</p>
+        <p>Upload a karyotype image to visualize and run segmentation.</p>
 
         <form method="POST" enctype="multipart/form-data">
             <input type="file" name="image" accept="image/*" required>
-            <button type="submit">Upload karyotype image</button>
+            <button type="submit">Upload image</button>
         </form>
 
         {% if image_filename %}
             <h2>Uploaded image</h2>
-            <img src="{{ url_for('static', filename='uploads/' + image_filename) }}"
-                 alt="Karyotype">
+            <img src="{{ url_for('static', filename='uploads/' + image_filename) }}" alt="Karyotype">
+            <form method="POST" action="{{ url_for('segment') }}">
+                <input type="hidden" name="image_filename" value="{{ image_filename }}">
+                <button type="submit">Segment image</button>
+            </form>
         {% endif %}
+
+        {% if seg_image_filename %}
+            <h2>Segmentation result</h2>
+            <img src="{{ url_for('static', filename='uploads/' + seg_image_filename) }}" alt="Segmentation">
+        {% endif %}
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                <div class="note">
+                    {% for msg in messages %}
+                        <div>{{ msg }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
     </div>
 </body>
 </html>
