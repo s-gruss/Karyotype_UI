@@ -1,0 +1,15 @@
+streamlit>=1.30
+opencv-python
+numpy
+pillow
+matplotlib
+
+# Segmentación (Mask R-CNN)
+torch
+torchvision
+# Detectron2 se instala aparte según tu CUDA/PyTorch:
+#   python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
+# Ver: https://detectron2.readthedocs.io/en/latest/tutorials/install.html
+
+# Clasificación (se integrará con el modelo final de Kiwi)
+# tensorflow

@@ -1,0 +1,43 @@
+# === Python ===
+__pycache__/
+*.py[cod]
+*$py.class
+.ipynb_checkpoints/
+
+# === Entornos virtuales ===
+venv/
+.venv/
+env/
+ENV/
+
+# === Datos pesados (NO van a GitHub) ===
+# Dataset AutoKary2022 (~3.4 GB, público). Se descarga aparte.
+Datasets/
+
+# === Pesos de modelos (binarios grandes, superan el límite de 100 MB de GitHub) ===
+# Se comparten por Google Drive / release, no por git.
+*.pth
+*.pt
+*.h5
+*.onnx
+*.ts
+*.pkl
+Entrenamiento/
+
+# === Salidas generadas por los scripts (regenerables) ===
+Pipelines/preprocesamiento_demo.png
+Pipelines/validacion_preprocesamiento.png
+
+# === Material del curso (copyright) — excluido por defecto ===
+# Si el repo es PRIVADO y querés compartirlo con Kiwi, borrá estas 3 líneas.
+Clases/
+Papers/
+Consigna.pdf
+
+# === Sistema operativo ===
+.DS_Store
+Thumbs.db
+
+# === Editores ===
+.vscode/
+.idea/
