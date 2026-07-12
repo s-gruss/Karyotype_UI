@@ -9,8 +9,7 @@ Correr con:  streamlit run streamlit_app.py
 
 from __future__ import annotations
 
-import os
-
+import cv2
 import numpy as np
 import streamlit as st
 from PIL import Image
@@ -30,11 +29,10 @@ st.caption(
 # --------------------------------------------------------------------------- #
 with st.sidebar:
     st.header("Configuración")
-    weights_path = st.text_input(
-        "Pesos del modelo de segmentación",
-        value=segmentation.DEFAULT_WEIGHTS,
+    ts_path = st.text_input(
+        "Modelo de segmentación (TorchScript)",
+        value=segmentation.DEFAULT_TS_WEIGHTS,
     )
-    device = st.selectbox("Dispositivo", ["cpu", "cuda"], index=0)
     score_thresh = st.slider("Umbral de confianza (segmentación)", 0.1, 0.9, 0.5, 0.05)
 
     st.divider()
@@ -52,8 +50,8 @@ with st.sidebar:
 
 
 @st.cache_resource(show_spinner="Cargando modelo de segmentación…")
-def get_predictor(weights: str, dev: str, thresh: float):
-    return segmentation.build_predictor(weights, dev, thresh)
+def get_segmenter(ts: str, thresh: float):
+    return segmentation.load_segmenter(ts_path=ts, score_thresh=thresh)
 
 
 # --------------------------------------------------------------------------- #
@@ -68,6 +66,10 @@ if uploaded is None:
     st.stop()
 
 image = np.array(Image.open(uploaded).convert("RGB"))
+# Estandarizamos a 1600x1600 (tamaño de entrenamiento): así la imagen, las
+# máscaras y los recortes quedan todos en la misma resolución.
+if image.shape[:2] != (segmentation.INPUT_SIZE, segmentation.INPUT_SIZE):
+    image = cv2.resize(image, (segmentation.INPUT_SIZE, segmentation.INPUT_SIZE))
 
 # --------------------------------------------------------------------------- #
 # Etapa 1 — Preprocesamiento
@@ -96,22 +98,21 @@ seg_input = steps["result"] if feed_preproc_to_seg else image
 # --------------------------------------------------------------------------- #
 st.header("2 · Segmentación (Mask R-CNN)")
 
-if not segmentation.detectron2_available():
+backend = segmentation.available_backend(ts_path)
+if backend is None:
     st.warning(
-        "Detectron2 no está instalado en este entorno, así que la segmentación no puede ejecutarse. "
-        "Instalalo en el venv de la interfaz para habilitar esta etapa "
-        "(ver README). El resto de la interfaz funciona igual."
+        "No hay backend de segmentación disponible. Exportá el modelo a TorchScript "
+        f"(ver Pipelines/export_torchscript_colab.py) y colocá `model_ts.ts` en "
+        f"`{segmentation.DEFAULT_TS_WEIGHTS}`. El resto de la interfaz funciona igual."
     )
     st.stop()
 
-if not os.path.exists(weights_path):
-    st.error(f"No se encontró el archivo de pesos: {weights_path}")
-    st.stop()
+st.caption(f"Backend activo: **{backend}**")
 
 if st.button("Ejecutar segmentación", type="primary"):
-    with st.spinner("Segmentando cromosomas…"):
-        predictor = get_predictor(weights_path, device, score_thresh)
-        result = segmentation.segment(predictor, seg_input)
+    with st.spinner("Segmentando cromosomas… (CPU, puede tardar unos segundos)"):
+        model, backend = get_segmenter(ts_path, score_thresh)
+        result = segmentation.segment(model, backend, seg_input, score_thresh)
         # La rama de clasificación recorta desde la imagen preprocesada CANÓNICA
         # (parámetros fijos, iguales a los del entrenamiento del clasificador),
         # no desde la cruda ni desde la preprocesada con los sliders.

@@ -32,8 +32,12 @@ imagen cruda ─► segmentación (Mask R-CNN) ─► máscaras
 
 Por tamaño, **no** están en el repo y se comparten aparte:
 - **Dataset AutoKary2022** (~3.4 GB) → `Datasets/Autokary2022_1600x1600/`
-- **Pesos de segmentación** `model_final.pth` (351 MB) → `Modelos/Segmentacion/`
+- **Segmentación:** `model_final.pth` (Detectron2, 351 MB) y `model_ts.ts`
+  (TorchScript, el que usa la interfaz) → `Modelos/Segmentacion/`
 - **Modelo de clasificación** (VGG16) → `Modelos/Clasificacion/`
+
+La interfaz corre la segmentación con el modelo **TorchScript** (solo `torch`,
+sin Detectron2). Se genera desde Colab con `Pipelines/export_torchscript_colab.py`.
 
 ## Interfaz
 
@@ -44,5 +48,5 @@ pip install -r requirements.txt
 streamlit run streamlit_app.py
 ```
 
-Ver [Interfaz/README.md](Interfaz/README.md) para detalles (incluida la instalación
-de Detectron2 para la etapa de segmentación).
+Ver [Interfaz/README.md](Interfaz/README.md) para detalles (incluido cómo obtener
+el modelo TorchScript para la etapa de segmentación).
