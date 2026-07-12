@@ -1,7 +1,11 @@
-# Cariotipado automático de cromosomas
+# Karyomatic: cariotipado automático de cromosomas
 
-TP Final — **Procesamiento Avanzado de Imágenes en Biología y Biomedicina** (ITBA, 16.85).
-Pipeline automático de cariotipado sobre el dataset **AutoKary2022**.
+Trabajo Práctico Final — 16.85 Procesamiento Avanzado de Imágenes en Biología y Biomedicina.
+Instituto Tecnológico de Buenos Aires (ITBA)
+
+Alumnos:
+- Santiago Gruss (63465) | sgruss@itba.edu.ar
+- Agustín Miguel (63214) | agmiguel@itba.edu.ar
 
 ## Pipeline
 
@@ -13,8 +17,8 @@ imagen cruda ─► segmentación (Mask R-CNN) ─► máscaras
                          extracción + rectificación (PCA) ─► clasificación (VGG16) ─► cariograma
 ```
 
-- La **segmentación** trabaja sobre la imagen cruda.
-- Los cromosomas individuales se recortan desde la imagen **preprocesada** (mismo
+- La segmentación trabaja sobre la imagen cruda.
+- Los cromosomas individuales se recortan desde la imagen preprocesada (mismo
   preprocesamiento canónico que usa el entrenamiento del clasificador).
 
 ## Estructura
