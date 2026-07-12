@@ -10,7 +10,7 @@ venv/
 env/
 ENV/
 
-# === Datos pesados (NO van a GitHub) ===
+# === Datos pesados ===
 # Dataset AutoKary2022 (~3.4 GB, público). Se descarga aparte.
 Datasets/
 
@@ -23,10 +23,6 @@ Datasets/
 *.ts
 *.pkl
 Entrenamiento/
-
-# === Salidas generadas por los scripts (regenerables) ===
-Pipelines/preprocesamiento_demo.png
-Pipelines/validacion_preprocesamiento.png
 
 # === Material
 Clases/

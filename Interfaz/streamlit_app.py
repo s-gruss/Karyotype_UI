@@ -102,7 +102,7 @@ backend = segmentation.available_backend(ts_path)
 if backend is None:
     st.warning(
         "No hay backend de segmentación disponible. Exportá el modelo a TorchScript "
-        f"(ver Pipelines/export_torchscript_colab.py) y colocá `model_ts.ts` en "
+        "(ver la sección de exportación del notebook 2_Segmentación.ipynb) y colocá `model_ts.ts` en "
         f"`{segmentation.DEFAULT_TS_WEIGHTS}`. El resto de la interfaz funciona igual."
     )
     st.stop()

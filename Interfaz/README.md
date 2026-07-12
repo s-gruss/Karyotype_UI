@@ -31,10 +31,10 @@ pip install -r requirements.txt  # streamlit, opencv, torch, etc. (no requiere D
 ## Modelo de segmentación
 
 La interfaz necesita `model_ts.ts` en `../Modelos/Segmentacion/`. Se genera una
-sola vez desde Colab (donde está Detectron2 y el modelo entrenado) con
-`Pipelines/export_torchscript_colab.py`, que exporta el `.pth` a TorchScript y
-verifica la paridad. El archivo es grande (>100 MB) → se comparte por Drive, no
-por git.
+sola vez desde Colab (donde está Detectron2 y el modelo entrenado), en la sección
+de exportación a TorchScript del notebook `Pipelines/2_Segmentación.ipynb`, que
+exporta el `.pth` a TorchScript y verifica la paridad. El archivo es grande
+(>100 MB) → se comparte por Drive, no por git.
 
 ## Uso
 

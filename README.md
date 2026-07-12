@@ -20,7 +20,7 @@ imagen cruda ─► segmentación (Mask R-CNN) ─► máscaras
 ## Estructura
 
 ```
-├── Pipelines/          Notebooks y scripts (segmentación, clasificación, preprocesamiento)
+├── Pipelines/          Notebooks por etapa (1 preprocesamiento, 2 segmentación, 3 extracción, 4 clasificación)
 ├── Interfaz/           Interfaz Streamlit + paquete pipeline/ (preprocessing, segmentation, extraction)
 ├── Modelos/            Métricas de entrenamiento (los pesos .pth/.h5 NO están en git)
 ├── PLAN_DE_TRABAJO.md  Plan y estado del proyecto
@@ -37,7 +37,8 @@ Por tamaño, **no** están en el repo y se comparten aparte:
 - **Modelo de clasificación** (VGG16) → `Modelos/Clasificacion/`
 
 La interfaz corre la segmentación con el modelo **TorchScript** (solo `torch`,
-sin Detectron2). Se genera desde Colab con `Pipelines/export_torchscript_colab.py`.
+sin Detectron2). Se genera desde Colab, en la sección de exportación a TorchScript
+del notebook `Pipelines/2_Segmentación.ipynb`.
 
 ## Interfaz
 

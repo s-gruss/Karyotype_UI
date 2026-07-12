@@ -1,8 +1,8 @@
 """Etapa de segmentación de instancias con Mask R-CNN.
 
 Backend principal: el modelo exportado a **TorchScript** (`model_ts.ts`), que
-corre solo con `torch` (sin Detectron2). Ver Pipelines/export_torchscript_colab.py
-para generar ese archivo.
+corre solo con `torch` (sin Detectron2). Se genera desde la sección de exportación
+a TorchScript del notebook Pipelines/2_Segmentación.ipynb.
 
 Backend fallback: Detectron2 con los pesos `.pth` (si estuviera instalado).
 
