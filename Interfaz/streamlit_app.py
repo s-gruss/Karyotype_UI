@@ -87,8 +87,9 @@ with c2:
     st.image(steps["result"], caption="Preprocesada", use_container_width=True)
 st.caption(
     f"Ruido estimado (σ, método de Immerkær): {steps['sigma_in']:.2f} → {steps['sigma_out']:.2f}. "
-    "El preprocesamiento realza la visualización y beneficia a la clasificación; "
-    "la segmentación se ejecuta sobre la imagen cruda salvo que lo cambies en la barra lateral."
+    "El preprocesamiento es una herramienta de visualización: los modelos se entrenaron "
+    "sobre la imagen cruda, así que segmentación y clasificación se ejecutan sobre la "
+    "imagen cruda (por consistencia train/inferencia) salvo que lo cambies en la barra lateral."
 )
 
 seg_input = steps["result"] if feed_preproc_to_seg else image
@@ -113,11 +114,11 @@ if st.button("Ejecutar segmentación", type="primary"):
     with st.spinner("Segmentando cromosomas… (CPU, puede tardar unos segundos)"):
         model, backend = get_segmenter(ts_path, score_thresh)
         result = segmentation.segment(model, backend, seg_input, score_thresh)
-        # La rama de clasificación recorta desde la imagen preprocesada CANÓNICA
-        # (parámetros fijos, iguales a los del entrenamiento del clasificador),
-        # no desde la cruda ni desde la preprocesada con los sliders.
-        clf_image = preprocessing.preprocess_for_classification(image)
-        chromosomes = extraction.extract_chromosomes(clf_image, result.masks)
+        # La rama de clasificación recorta desde la imagen CRUDA: el clasificador se
+        # entrenó sobre recortes crudos, así que en inferencia debe recibir recortes
+        # crudos (consistencia train/inferencia). El preprocesamiento queda para
+        # visualización, no en el camino de los modelos.
+        chromosomes = extraction.extract_chromosomes(image, result.masks)
     st.session_state["seg_result"] = result
     st.session_state["chromosomes"] = chromosomes
 
@@ -131,8 +132,8 @@ if "seg_result" in st.session_state:
     st.header("3 · Extracción y rectificación (PCA)")
     chromosomes = st.session_state["chromosomes"]
     st.caption(
-        f"{len(chromosomes)} cromosomas recortados **desde la imagen preprocesada** "
-        "(preprocesamiento canónico, el mismo del entrenamiento del clasificador), "
+        f"{len(chromosomes)} cromosomas recortados **desde la imagen cruda** "
+        "(la misma entrada con la que se entrenó el clasificador), "
         "rotados a orientación vertical (eje principal por PCA) y escalados a 224×224 "
         "preservando el tamaño relativo."
     )
