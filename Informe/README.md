@@ -34,10 +34,11 @@ por `\includegraphics[width=...]{nombre}`.
 ## Pendientes de redacción
 - **Resumen**: placeholder (después de la carátula, antes del índice); se redacta al
   final.
-- **Cariograma**: ensamblado pendiente (marcado con `\pendiente{}` en Métodos y
-  Resultados).
 - Verificar los valores de PSNR/SSIM del preprocesamiento contra el notebook
   `1_Preprocesamiento.ipynb` y ajustarlos si difieren.
+
+La clasificación y el **cariograma** ya están integrados (Métodos + Resultados, con
+la figura `figuras/cariograma_ejemplo.png` generada por el pipeline end-to-end).
 
 ## Estado del preprocesamiento (importante)
 Los modelos (segmentación y clasificación) se ejecutan sobre la **imagen cruda**, por

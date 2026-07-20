@@ -417,11 +417,29 @@ de la clase minoritaria), \textit{label smoothing} de 0.1 y regularización \(L_
 \subsection{Ensamblado del cariograma}
 \label{sec:cariograma}
 
-A partir de la clase asignada a cada cromosoma, esta etapa los ordena en la grilla
-estándar del cariograma, agrupándolos por pares.
+A partir de la clase asignada a cada cromosoma, esta etapa (módulo
+\texttt{karyogram.py}) los ordena en la grilla estándar del cariograma. El
+procedimiento es:
 
-\pendiente{procedimiento de ensamblado, ordenamiento y conteo de pares, con el
-marcado de posibles anomalías numéricas.}
+\begin{enumerate}[topsep=2pt,itemsep=1pt]
+  \item \textbf{Mapeo de clases.} La salida del clasificador es un índice 0--23 que
+        no coincide con el número de cromosoma, porque el generador de datos de Keras
+        (\texttt{flow\_from\_directory}) ordena las clases alfabéticamente como
+        cadenas ('1','10','11',\ldots,'2','20',\ldots). Se aplica el mapeo inverso
+        exacto para recuperar el número real, con las clases 23 y 24 asignadas a X e
+        Y.
+  \item \textbf{Agrupamiento y ordenamiento.} Los cromosomas se agrupan por clase y
+        se colocan en la grilla estándar: autosomas 1--22 por tamaño decreciente,
+        seguidos de los cromosomas sexuales X e Y. Los homólogos de cada par se
+        ordenan por tamaño para una disposición prolija.
+  \item \textbf{Conteo y detección de anomalías.} Se cuentan las instancias por
+        clase y se marca como posible anomalía numérica todo autosoma cuyo conteo sea
+        distinto de dos (el conteo de X/Y depende del sexo y no se marca por
+        defecto).
+\end{enumerate}
+
+El resultado es una imagen única con el cariograma ordenado, la etiqueta y el conteo
+de cada clase, y el resaltado de las anomalías detectadas.
 
 \subsection{Sobre la etapa de \textit{tracking}}
 
@@ -457,6 +475,10 @@ secuencial:
         imagen, con el conteo de cromosomas. Corre el modelo TorchScript.
   \item \textbf{Extracción y rectificación}: galería de los cromosomas recortados,
         rotados a vertical y escalados a \(224\times224\).
+  \item \textbf{Clasificación}: cada recorte etiquetado con su tipo (1--22, X, Y) y
+        la confianza del modelo. Corre el clasificador exportado a ONNX.
+  \item \textbf{Cariograma}: ensamblado ordenado en la grilla estándar, con el
+        conteo por par y el aviso de posibles anomalías numéricas.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -590,7 +612,26 @@ de test) es el de menor desempeño (F1 = 0.69) pese al balanceo por pesos.
 
 \subsection{Cariograma}
 
-\pendiente{ejemplo de cariograma ensamblado a partir de una imagen de test.}
+Integrando todas las etapas, el pipeline arma el cariograma de forma automática. La
+Figura~\ref{fig:cariograma} muestra un ejemplo sobre una metafase de test: los 46
+cromosomas quedan segmentados, rectificados, clasificados y ordenados en la grilla
+estándar, produciendo un cariotipo femenino normal (46,XX) sin anomalías numéricas.
+En esa imagen la clasificación acierta el \SI{97.8}{\percent} de los cromosomas; el
+desempeño varía por imagen y en promedio se mantiene en línea con la exactitud del
+clasificador reportada en la Sección~\ref{sec:res-clasif}. Para su uso en la
+interfaz, el clasificador se exporta a ONNX y corre con \texttt{onnxruntime}, sin
+necesidad de TensorFlow (misma estrategia que la segmentación con TorchScript),
+verificando la paridad de salidas con el modelo original.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{cariograma_ejemplo.png}
+  \caption{Cariograma ensamblado automáticamente por el pipeline a partir de una
+  metafase de test. Cada celda muestra el par de homólogos rectificados, con el
+  número de cromosoma y el conteo de instancias. Los cromosomas sexuales (X, Y) se
+  ubican al final; el conteo por par permite marcar anomalías numéricas.}
+  \label{fig:cariograma}
+\end{figure}
 
 \subsection{Interfaz}
 

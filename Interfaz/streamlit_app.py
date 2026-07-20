@@ -14,7 +14,7 @@ import numpy as np
 import streamlit as st
 from PIL import Image
 
-from pipeline import preprocessing, segmentation, extraction
+from pipeline import preprocessing, segmentation, extraction, classification, karyogram
 
 st.set_page_config(page_title="Cariotipado automático", layout="wide")
 
@@ -52,6 +52,11 @@ with st.sidebar:
 @st.cache_resource(show_spinner="Cargando modelo de segmentación…")
 def get_segmenter(ts: str, thresh: float):
     return segmentation.load_segmenter(ts_path=ts, score_thresh=thresh)
+
+
+@st.cache_resource(show_spinner="Cargando clasificador…")
+def get_classifier():
+    return classification.load_classifier()
 
 
 # --------------------------------------------------------------------------- #
@@ -119,8 +124,16 @@ if st.button("Ejecutar segmentación", type="primary"):
         # crudos (consistencia train/inferencia). El preprocesamiento queda para
         # visualización, no en el camino de los modelos.
         chromosomes = extraction.extract_chromosomes(image, result.masks)
+        # Clasificación (si el modelo ONNX está disponible)
+        clf_indices = clf_labels = clf_probs = None
+        if classification.onnx_available():
+            clf = get_classifier()
+            clf_indices, clf_labels, clf_probs = classification.classify(clf, chromosomes)
     st.session_state["seg_result"] = result
     st.session_state["chromosomes"] = chromosomes
+    st.session_state["clf_indices"] = clf_indices
+    st.session_state["clf_labels"] = clf_labels
+    st.session_state["clf_probs"] = clf_probs
 
 if "seg_result" in st.session_state:
     result = st.session_state["seg_result"]
@@ -143,20 +156,40 @@ if "seg_result" in st.session_state:
             st.image(chrom.image, use_container_width=True)
 
     # ------------------------------------------------------------------- #
-    # Etapa 4 — Clasificación (pendiente: modelo de Kiwi)
+    # Etapa 4 — Clasificación (VGG16 + SE, vía ONNX)
     # ------------------------------------------------------------------- #
     st.header("4 · Clasificación")
-    st.info(
-        "Etapa pendiente: falta integrar el modelo de clasificación (VGG16). "
-        "Cuando el modelo final esté en Modelos/Clasificacion/, cada recorte de la "
-        "etapa 3 se clasificará en su tipo de cromosoma (1–22, X, Y)."
-    )
+    clf_indices = st.session_state.get("clf_indices")
+    clf_labels = st.session_state.get("clf_labels")
+    clf_probs = st.session_state.get("clf_probs")
 
-    # ------------------------------------------------------------------- #
-    # Etapa 5 — Cariograma (pendiente)
-    # ------------------------------------------------------------------- #
-    st.header("5 · Cariograma")
-    st.info(
-        "Etapa pendiente: ensamblado de los cromosomas clasificados en la grilla "
-        "estándar ordenada, con conteo por par y marcado de posibles anomalías numéricas."
-    )
+    if clf_indices is None:
+        st.info(
+            "Clasificador no disponible: falta el modelo ONNX en "
+            f"`{classification.DEFAULT_ONNX_WEIGHTS}`. Convertí el `.h5` a ONNX "
+            "(ver Interfaz/README.md) o copialo ahí. El resto del pipeline funciona igual."
+        )
+    else:
+        st.caption(
+            "Cada recorte de la etapa 3 se clasifica en su tipo (1–22, X, Y) con el "
+            "modelo VGG16 + atención SE (exportado a ONNX, corre con onnxruntime)."
+        )
+        order = sorted(range(len(chromosomes)), key=lambda i: -chromosomes[i].length_px)
+        cols = st.columns(8)
+        for slot, i in enumerate(order):
+            with cols[slot % 8]:
+                st.image(chromosomes[i].image, use_container_width=True)
+                st.caption(f"**{clf_labels[i]}** ({clf_probs[i]*100:.0f}%)")
+
+        # --------------------------------------------------------------- #
+        # Etapa 5 — Cariograma
+        # --------------------------------------------------------------- #
+        st.header("5 · Cariograma")
+        kimg, cells = karyogram.assemble_karyogram(chromosomes, clf_indices)
+        st.image(kimg, caption="Cariograma ensamblado (grilla estándar 1–22, X, Y)",
+                 use_container_width=True)
+        anomalias = karyogram.anomalies_summary(cells)
+        if anomalias:
+            st.warning("Posibles anomalías numéricas detectadas:\n\n- " + "\n- ".join(anomalias))
+        else:
+            st.success("Conteo por par sin anomalías numéricas (2 instancias por autosoma).")

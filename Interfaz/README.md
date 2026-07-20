@@ -18,7 +18,11 @@ original → preprocesamiento → segmentación → extracción/registración �
   sin necesidad de Detectron2. Trabaja a 1600×1600.
 - **Extracción/registración** (`pipeline/extraction.py`): recorte por máscara,
   rectificación a vertical por eje principal (PCA) y escalado a 224×224.
-- **Clasificación / cariograma**: pendientes (integración del modelo VGG16).
+- **Clasificación** (`pipeline/classification.py`): VGG16 + atención SE, exportado
+  a **ONNX** y ejecutado con `onnxruntime` (sin TensorFlow). Clasifica cada recorte
+  en su tipo (1–22, X, Y).
+- **Cariograma** (`pipeline/karyogram.py`): ensamblado en la grilla estándar,
+  conteo por par y marcado de anomalías numéricas.
 
 ## Instalación
 
@@ -35,6 +39,21 @@ sola vez desde Colab (donde está Detectron2 y el modelo entrenado), en la secci
 de exportación a TorchScript del notebook `Pipelines/2_Segmentación.ipynb`, que
 exporta el `.pth` a TorchScript y verifica la paridad. El archivo es grande
 (>100 MB) → se comparte por Drive, no por git.
+
+## Modelo de clasificación
+
+La interfaz necesita `model_VGG_v2.onnx` en `../Modelos/Clasificacion/`. El `.onnx`
+no se versiona (grande, se deriva del `.h5`): obtenelo por Drive o regeneralo desde
+el `.h5` con TensorFlow:
+
+```bash
+pip install tensorflow-cpu==2.15.1 tf2onnx onnx   # solo para convertir
+python convert_classifier_to_onnx.py ../Modelos/Clasificacion/model_VGG_v2.h5 \
+                                     ../Modelos/Clasificacion/model_VGG_v2.onnx
+```
+
+Si falta el `.onnx`, las etapas 1–3 (preprocesamiento, segmentación, extracción)
+funcionan igual; la interfaz avisa que la clasificación no está disponible.
 
 ## Uso
 
