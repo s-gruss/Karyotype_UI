@@ -556,12 +556,11 @@ El entrenamiento del modelo final se detuvo por \textit{early stopping} restaura
 los pesos de la mejor época; sus curvas de exactitud y pérdida
 (Figura~\ref{fig:clasif-curvas}) muestran convergencia estable con un moderado
 sobreajuste (exactitud de entrenamiento \(\approx\)99\,\% frente a \(\approx\)87\,\%
-de validación). El análisis por clase (Tabla~\ref{tab:clasif-report},
-Anexo~\ref{anexo:clasif}) revela que el error residual se concentra en un grupo de
-cromosomas medianos y pequeños de morfología similar (clases 7, 8, 9, 10, 12, 13 y
-14), la parte históricamente más difícil del cariotipado; la clase minoritaria
-(clase 16, con solo 24 muestras de test) es la de menor desempeño (F1 = 0.69) pese
-al balanceo por pesos.
+de validación). El análisis por cromosoma (Tabla~\ref{tab:clasif-report},
+Anexo~\ref{anexo:clasif}) revela que el error residual se concentra en los
+cromosomas pequeños de morfología similar (16 a 22), la parte históricamente más
+difícil del cariotipado; el cromosoma Y —la clase minoritaria, con solo 24 muestras
+de test— es el de menor desempeño (F1 = 0.69) pese al balanceo por pesos.
 
 \begin{figure}[H]
   \centering
@@ -662,37 +661,38 @@ curvas de entrenamiento del resto de los modelos comparados.
 \begin{table}[H]
   \centering
   \small
-  \caption{Reporte de clasificación por clase del modelo final (VGG16 + SE +
-  \texttt{class\_weight} + \textit{label smoothing} + \(L_2\)).}
+  \caption{Reporte de clasificación por cromosoma del modelo final (VGG16 + SE +
+  \texttt{class\_weight} + \textit{label smoothing} + \(L_2\)). Las clases 23 y 24
+  del dataset corresponden a los cromosomas sexuales X e Y, respectivamente.}
   \label{tab:clasif-report}
   \begin{tabular}{lcccc}
     \toprule
-    Clase & Precisión & Recall & F1 & Soporte \\
+    Cromosoma & Precisión & Recall & F1 & Soporte \\
     \midrule
-    0  & 0.98 & 0.98 & 0.98 & 132 \\
-    1  & 0.81 & 0.89 & 0.85 & 129 \\
-    2  & 0.91 & 0.94 & 0.92 & 128 \\
-    3  & 0.97 & 0.94 & 0.95 & 126 \\
-    4  & 0.92 & 0.88 & 0.90 & 122 \\
-    5  & 0.91 & 0.87 & 0.89 & 121 \\
-    6  & 0.83 & 0.87 & 0.85 & 126 \\
-    7  & 0.84 & 0.83 & 0.84 & 125 \\
-    8  & 0.82 & 0.78 & 0.80 & 125 \\
-    9  & 0.84 & 0.77 & 0.81 & 119 \\
-    10 & 0.71 & 0.75 & 0.73 & 116 \\
-    11 & 0.95 & 0.95 & 0.95 & 128 \\
-    12 & 0.73 & 0.87 & 0.80 & 123 \\
-    13 & 0.92 & 0.92 & 0.92 & 124 \\
-    14 & 0.78 & 0.83 & 0.81 & 123 \\
-    15 & 0.81 & 0.83 & 0.82 & 100 \\
-    16 & 0.68 & 0.71 & 0.69 & 24 \\
-    17 & 0.98 & 0.90 & 0.94 & 127 \\
-    18 & 0.86 & 0.85 & 0.86 & 126 \\
-    19 & 0.90 & 0.91 & 0.90 & 124 \\
-    20 & 0.90 & 0.86 & 0.88 & 127 \\
-    21 & 0.99 & 0.87 & 0.93 & 128 \\
-    22 & 0.85 & 0.90 & 0.87 & 122 \\
-    23 & 0.86 & 0.82 & 0.84 & 129 \\
+    1  & 0.98 & 0.98 & 0.98 & 132 \\
+    2  & 0.95 & 0.95 & 0.95 & 128 \\
+    3  & 0.98 & 0.90 & 0.94 & 127 \\
+    4  & 0.86 & 0.85 & 0.86 & 126 \\
+    5  & 0.90 & 0.91 & 0.90 & 124 \\
+    6  & 0.90 & 0.86 & 0.88 & 127 \\
+    7  & 0.99 & 0.87 & 0.93 & 128 \\
+    8  & 0.85 & 0.90 & 0.87 & 122 \\
+    9  & 0.86 & 0.82 & 0.84 & 129 \\
+    10 & 0.81 & 0.89 & 0.85 & 129 \\
+    11 & 0.91 & 0.94 & 0.92 & 128 \\
+    12 & 0.97 & 0.94 & 0.95 & 126 \\
+    13 & 0.92 & 0.88 & 0.90 & 122 \\
+    14 & 0.91 & 0.87 & 0.89 & 121 \\
+    15 & 0.83 & 0.87 & 0.85 & 126 \\
+    16 & 0.84 & 0.83 & 0.84 & 125 \\
+    17 & 0.82 & 0.78 & 0.80 & 125 \\
+    18 & 0.84 & 0.77 & 0.81 & 119 \\
+    19 & 0.71 & 0.75 & 0.73 & 116 \\
+    20 & 0.73 & 0.87 & 0.80 & 123 \\
+    21 & 0.92 & 0.92 & 0.92 & 124 \\
+    22 & 0.78 & 0.83 & 0.81 & 123 \\
+    X (23) & 0.81 & 0.83 & 0.82 & 100 \\
+    Y (24) & 0.68 & 0.71 & 0.69 & 24 \\
     \midrule
     \textbf{Exactitud}        & \multicolumn{3}{c}{\textbf{0.87}} & 2874 \\
     \textit{Promedio macro}   & 0.87 & 0.86 & 0.86 & 2874 \\
