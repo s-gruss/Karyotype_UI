@@ -70,8 +70,24 @@
 \section*{Resumen}
 \addcontentsline{toc}{section}{Resumen}
 
-\textit{[Pendiente: el resumen se redactará al finalizar el trabajo, una vez
-consolidados todos los resultados.]}
+El cariotipado es un procedimiento de rutina en citogenética clínica que consiste en
+detectar, clasificar y ordenar los cromosomas de una célula en metafase para
+diagnosticar alteraciones cromosómicas. Realizado manualmente es lento (30 a 50
+minutos por caso) y depende de personal altamente especializado, lo que motiva su
+automatización. En este trabajo se desarrolla un pipeline automático de cariotipado
+sobre el dataset público AutoKary2022, integrando las etapas clásicas del
+procesamiento de imágenes: caracterización de la imagen y preprocesamiento
+(estimación de ruido, denoising Non-Local Means y realce de contraste CLAHE),
+segmentación de instancias con Mask R-CNN, extracción de características y
+registración de cada cromosoma a una pose canónica mediante PCA, clasificación con
+una red convolucional VGG16 con atención Squeeze-and-Excitation, y ensamblado del
+cariograma en la grilla estándar con conteo por par y marcado de anomalías. La
+segmentación alcanza un AP@0.5 del \SI{97.8}{\percent} sobre el conjunto de test y la
+clasificación una exactitud del \SI{87}{\percent} sobre las 24 clases cromosómicas.
+Se presenta además una interfaz gráfica en Streamlit que ejecuta y visualiza cada
+etapa del procesamiento, corriendo los modelos sin dependencias pesadas (segmentación
+en TorchScript y clasificación en ONNX). Los resultados se contrastan con el estado
+del arte y se discuten las mejoras pendientes.
 
 \vspace{1.5em}
 \hrule
@@ -194,8 +210,8 @@ pipeline trabaja con imágenes estandarizadas a \(1600 \times 1600\) píxeles.
 
 \subsection{Arquitectura general del pipeline}
 
-El pipeline de cariotipado (Figura~\ref{fig:pipeline}) encadena las siguientes
-etapas, desde la imagen de metafase hasta el cariograma final:
+El pipeline de cariotipado encadena las siguientes etapas, desde la imagen de
+metafase hasta el cariograma final:
 
 \begin{equation*}
 \text{imagen cruda} \rightarrow
@@ -204,16 +220,6 @@ etapas, desde la imagen de metafase hasta el cariograma final:
 \underbrace{\text{clasif.}}_{\text{CNN}} \rightarrow
 \text{cariograma}
 \end{equation*}
-
-\begin{figure}[H]
-  \centering
-  \includegraphics[width=0.95\linewidth]{pipeline_diagrama.png}
-  \caption{Esquema del pipeline. Los modelos operan sobre la imagen cruda. El
-  preprocesamiento se estudia como etapa de caracterización de la imagen y queda
-  disponible en la interfaz como herramienta de visualización, fuera de la cadena
-  de inferencia.}
-  \label{fig:pipeline}
-\end{figure}
 
 Una decisión de diseño relevante es que los modelos se ejecutan sobre la imagen
 cruda, no sobre una versión preprocesada. El preprocesamiento se aborda como una
@@ -487,16 +493,19 @@ secuencial:
 \subsection{Caracterización del preprocesamiento}
 \label{sec:res-preproc}
 
-Sobre imágenes reales del conjunto, el preprocesamiento canónico (NLM con
-\(h=7\) + CLAHE con \texttt{clip}\,=\,1.5) reduce el ruido estimado preservando la
-estructura de las imágenes. La comparación cuantitativa entre la imagen original en
-escala de grises y la preprocesada arroja valores altos de PSNR
-(\(\approx\SI{33}{dB}\)) y de índice de similitud estructural
-SSIM~\cite{wang2004ssim} (\(\approx0.97\)): el filtrado limpia el fondo sin degradar
-el bandeo G diagnóstico. Estos valores confirman que el ruido de partida es muy bajo,
-de modo que el margen de mejora del denoising es acotado; junto con el principio de
-consistencia entre entrenamiento e inferencia, esto fundamenta la decisión de correr
-los modelos sobre la imagen cruda (Sección~\ref{sec:preproc}).
+Sobre una muestra del conjunto de test se cuantificó el efecto del preprocesamiento
+canónico (NLM con \(h=7\) + CLAHE con \texttt{clip}\,=\,1.5). El ruido estimado por
+el método de Immerkær es muy bajo ya en la imagen original y disminuye con el
+filtrado (\(\sigma \approx 0.7 \rightarrow 0.2\) en promedio), lo que indica que las
+imágenes parten prácticamente limpias y el margen de mejora del denoising es
+acotado. El índice de similitud estructural SSIM~\cite{wang2004ssim} entre la imagen
+original en escala de grises y la preprocesada es alto (\(\approx0.95\)),
+confirmando que el realce preserva la estructura del bandeo G diagnóstico; el PSNR
+moderado (\(\approx\SI{21}{dB}\)) refleja, en cambio, el cambio de contraste que
+introduce CLAHE de forma deliberada. En conjunto, estos valores muestran que
+preprocesar aporta poco a la calidad de la imagen; junto con el principio de
+consistencia entre entrenamiento e inferencia, fundamentan la decisión de correr los
+modelos sobre la imagen cruda (Sección~\ref{sec:preproc}).
 
 \subsection{Segmentación}
 
@@ -694,6 +703,11 @@ segmentación de nivel de estado del arte, una registración que estandariza los
 cromosomas y un clasificador que alcanza un 87\,\% de exactitud, y aporta una
 interfaz que hace tangible cada etapa del procesamiento de imágenes involucrado.
 
+\clearpage
+\bibliographystyle{IEEEtran}
+\bibliography{referencias}
+
+\clearpage
 % ================================================================== %
 \appendix
 \section{Anexo: detalle de la clasificación}
@@ -802,8 +816,5 @@ curvas de entrenamiento del resto de los modelos comparados.
   \caption{VGG16 + SE v2: curvas de entrenamiento y validación.}
   \label{fig:anexo-sev2}
 \end{figure}
-
-\bibliographystyle{IEEEtran}
-\bibliography{referencias}
 
 \end{document}
