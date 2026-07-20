@@ -1,0 +1,15 @@
+# Artefactos de compilación de LaTeX (se regeneran con pdflatex/bibtex)
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
+# PDF compilado (opcional: descomentar si no querés versionar el PDF)
+# informe.pdf
