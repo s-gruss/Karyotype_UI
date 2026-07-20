@@ -28,7 +28,6 @@ Detalle completo en [Informe/informe_final.pdf](Informe/informe_final.pdf).
 ├── Interfaz/           Interfaz Streamlit + paquete pipeline/ (preprocessing, segmentation, extraction, classification, karyogram)
 ├── Modelos/            Métricas de entrenamiento (los pesos .pth/.h5/.onnx NO están en git)
 ├── Informe/            Informe final (LaTeX + PDF) y figuras
-├── PLAN_DE_TRABAJO.md  Planificación inicial del proyecto (checklist de la consigna)
 ├── Datasets/           AutoKary2022 (NO está en git, ver abajo)
 └── Papers/ Clases/     Material de referencia (excluidos de git)
 ```
