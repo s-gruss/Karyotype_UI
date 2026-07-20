@@ -9,10 +9,11 @@ visualiza cada etapa del procesamiento.
 original → preprocesamiento → segmentación → extracción/registración → clasificación → cariograma
 ```
 
-- **Preprocesamiento** (`pipeline/preprocessing.py`): denoising (NLM) + CLAHE.
-  Por defecto NO se aplica antes de la segmentación (el modelo se entrenó sobre
-  imágenes crudas); sí se aplica a la rama de clasificación (parámetros canónicos
-  en `preprocess_for_classification`).
+- **Preprocesamiento** (`pipeline/preprocessing.py`): estimación de ruido, denoising
+  (NLM) y realce de contraste (CLAHE). Es una etapa de caracterización y
+  visualización: los modelos operan sobre la imagen cruda, así que el
+  preprocesamiento no se aplica en el camino de segmentación ni de clasificación
+  (las imágenes ya son muy limpias y un realce agresivo puede deteriorar el bandeo G).
 - **Segmentación** (`pipeline/segmentation.py`): Mask R-CNN ResNet-50 FPN.
   Corre el modelo exportado a **TorchScript** (`model_ts.ts`) con solo `torch`,
   sin necesidad de Detectron2. Trabaja a 1600×1600.

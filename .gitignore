@@ -29,6 +29,10 @@ Clases/
 Papers/
 Consigna.pdf
 
+# === Material para compartir (correo al docente), no es fuente del repo
+para_docente/
+Presentacion/
+
 # === Sistema operativo ===
 .DS_Store
 Thumbs.db
