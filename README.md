@@ -17,22 +17,9 @@ imagen cruda ─► segmentación (Mask R-CNN) ─► máscaras
        extracción + rectificación (PCA) ─► clasificación (VGG16+SE) ─► cariograma
 ```
 
-- La segmentación trabaja sobre la imagen cruda.
-- Los cromosomas individuales se recortan desde la imagen preprocesada (mismo
-  preprocesamiento canónico que usa el entrenamiento del clasificador).
-- El cariograma final se ensambla en la grilla estándar (24 pares), con conteo
-  por par y marcado de anomalías numéricas.
-
 ## Resultados
 
 Detalle completo en [Informe/informe_final.pdf](Informe/informe_final.pdf).
-
-- **Segmentación** (Mask R-CNN, protocolo COCO sobre test): AP@0.5 = 97.8%
-  (cajas) / 97.9% (máscaras), AP@0.75 > 94%.
-- **Clasificación** (VGG16 + atención SE): exactitud ≈ 87% sobre las 24 clases
-  cromosómicas.
-- **Pipeline end-to-end** (interfaz, segmentación + clasificación encadenadas):
-  ≈ 85% de exactitud, coherente con la clasificación aislada.
 
 ## Estructura
 
@@ -48,7 +35,7 @@ Detalle completo en [Informe/informe_final.pdf](Informe/informe_final.pdf).
 
 ## Datos y modelos (no versionados)
 
-Por tamaño, **no** están en el repo y se comparten aparte:
+Por tamaño, no están en el repo y se comparten aparte:
 - **Dataset AutoKary2022** (~3.4 GB) → `Datasets/Autokary2022_1600x1600/`
 - **Segmentación:** `model_final.pth` (Detectron2, 351 MB) y `model_ts.ts`
   (TorchScript, el que usa la interfaz) → `Modelos/Segmentacion/`
