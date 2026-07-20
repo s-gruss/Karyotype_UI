@@ -355,7 +355,8 @@ CPU.
 (ResNet-50~\cite{he2016resnet} y VGG16~\cite{simonyan2015vgg}) y, sobre el mejor de
 ellos, la incorporación de un bloque de atención por canal
 \textit{Squeeze-and-Excitation} (SE)~\cite{hu2018senet} y de estrategias de
-regularización y balanceo (Tabla~\ref{tab:clasif-metodologia}). El bloque SE
+regularización y balanceo (Tabla~\ref{tab:clasif-metodologia},
+Anexo~\ref{anexo:clasif}). El bloque SE
 recalibra los canales de la última capa convolucional: los resume con \textit{global
 average pooling}, aprende un peso por canal con dos capas densas (reducción con ReLU
 y expansión con \textit{sigmoide}) y reescala el tensor original con esos pesos,
@@ -553,11 +554,25 @@ El entrenamiento del modelo final se detuvo por \textit{early stopping} restaura
 los pesos de la mejor época; sus curvas de exactitud y pérdida
 (Figura~\ref{fig:clasif-curvas}) muestran convergencia estable con un moderado
 sobreajuste (exactitud de entrenamiento \(\approx\)99\,\% frente a \(\approx\)87\,\%
-de validación). El análisis por cromosoma (Tabla~\ref{tab:clasif-report},
-Anexo~\ref{anexo:clasif}) revela que el error residual se concentra en los
-cromosomas pequeños de morfología similar (16 a 22), la parte históricamente más
-difícil del cariotipado; el cromosoma Y (la clase minoritaria, con solo 24 muestras
-de test) es el de menor desempeño (F1 = 0.69) pese al balanceo por pesos.
+de validación). La matriz de confusión del modelo final
+(Figura~\ref{fig:cm-final}) muestra una diagonal claramente dominante, con las
+confusiones concentradas en celdas vecinas: los errores ocurren casi exclusivamente
+entre cromosomas de tamaño contiguo. El análisis por cromosoma
+(Tabla~\ref{tab:clasif-report}, Anexo~\ref{anexo:clasif}) confirma que el error
+residual se concentra en los cromosomas pequeños de morfología similar (16 a 22),
+la parte históricamente más difícil del cariotipado; el cromosoma Y (la clase
+minoritaria, con solo 24 muestras de test) es el de menor desempeño (F1 = 0.69)
+pese al balanceo por pesos.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.76\linewidth]{cm_final.png}
+  \caption{Matriz de confusión del clasificador final sobre el conjunto de test,
+  normalizada por fila (proporción de cada clase real, es decir, \textit{recall}).
+  Filas y columnas siguen el orden de cromosoma (1--22, X, Y). Se anotan en rojo las
+  confusiones fuera de la diagonal que superan el \SI{10}{\percent} de su clase.}
+  \label{fig:cm-final}
+\end{figure}
 
 \begin{figure}[H]
   \centering
@@ -677,8 +692,9 @@ interfaz que hace tangible cada etapa del procesamiento de imágenes involucrado
 % ================================================================== %
 
 La Tabla~\ref{tab:clasif-report} presenta el reporte de clasificación por clase del
-modelo final. Las Figuras~\ref{fig:anexo-resnet}--\ref{fig:anexo-sev2} muestran las
-curvas de entrenamiento del resto de los modelos comparados.
+modelo final. La Figura~\ref{fig:cm-anexo} reúne las matrices de confusión del resto
+de los modelos comparados, y las Figuras~\ref{fig:anexo-resnet}--\ref{fig:anexo-sev2}
+sus curvas de entrenamiento.
 
 \begin{table}[H]
   \centering
@@ -722,6 +738,33 @@ curvas de entrenamiento del resto de los modelos comparados.
     \bottomrule
   \end{tabular}
 \end{table}
+
+\begin{figure}[H]
+  \centering
+  \begin{subfigure}{0.49\textwidth}
+    \includegraphics[width=\textwidth]{cm_resnet50.png}
+    \caption{ResNet-50 (\SI{38.8}{\percent})}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.49\textwidth}
+    \includegraphics[width=\textwidth]{cm_vgg_base.png}
+    \caption{VGG16 baseline (\SI{85.4}{\percent})}
+  \end{subfigure}
+
+  \vspace{0.7em}
+  \begin{subfigure}{0.49\textwidth}
+    \includegraphics[width=\textwidth]{cm_se_v1.png}
+    \caption{VGG16 + SE v1 (\SI{81.0}{\percent})}
+  \end{subfigure}\hfill
+  \begin{subfigure}{0.49\textwidth}
+    \includegraphics[width=\textwidth]{cm_se_v2.png}
+    \caption{VGG16 + SE v2 (\SI{86.3}{\percent})}
+  \end{subfigure}
+  \caption{Matrices de confusión de los modelos comparados, normalizadas por fila y
+  en orden de cromosoma. Se aprecia el contraste entre la dispersión en bloques de
+  ResNet-50 —que confunde cromosomas de tamaños contiguos de forma masiva— y la
+  diagonal dominante de las variantes de VGG16.}
+  \label{fig:cm-anexo}
+\end{figure}
 
 \begin{figure}[H]
   \centering
