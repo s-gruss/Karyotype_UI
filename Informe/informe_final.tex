@@ -51,9 +51,8 @@
   {\large Trabajo Práctico Final}\\[2.5cm]
 
   \rule{\linewidth}{0.5pt}\\[0.6cm]
-  {\huge\bfseries Cariotipado automático de cromosomas:\\[0.3cm]
-   segmentación de instancias y registración\\[0.3cm]
-   mediante aprendizaje profundo\par}
+  {\huge\bfseries Karyomatic:\\[0.3cm]
+    Cariotipado automático de cromosomas por segmentación de instancias y registración mediante aprendizaje profundo\par}
   \vspace{0.6cm}
   \rule{\linewidth}{0.5pt}\\[2.5cm]
 
@@ -70,24 +69,17 @@
 \section*{Resumen}
 \addcontentsline{toc}{section}{Resumen}
 
-El cariotipado es un procedimiento de rutina en citogenética clínica que consiste en
-detectar, clasificar y ordenar los cromosomas de una célula en metafase para
-diagnosticar alteraciones cromosómicas. Realizado manualmente es lento (30 a 50
-minutos por caso) y depende de personal altamente especializado, lo que motiva su
-automatización. En este trabajo se desarrolla un pipeline automático de cariotipado
-sobre el dataset público AutoKary2022, integrando las etapas clásicas del
-procesamiento de imágenes: caracterización de la imagen y preprocesamiento
-(estimación de ruido, denoising Non-Local Means y realce de contraste CLAHE),
-segmentación de instancias con Mask R-CNN, extracción de características y
-registración de cada cromosoma a una pose canónica mediante PCA, clasificación con
-una red convolucional VGG16 con atención Squeeze-and-Excitation, y ensamblado del
-cariograma en la grilla estándar con conteo por par y marcado de anomalías. La
-segmentación alcanza un AP@0.5 del \SI{97.8}{\percent} sobre el conjunto de test y la
-clasificación una exactitud del \SI{87}{\percent} sobre las 24 clases cromosómicas.
-Se presenta además una interfaz gráfica en Streamlit que ejecuta y visualiza cada
-etapa del procesamiento, corriendo los modelos sin dependencias pesadas (segmentación
-en TorchScript y clasificación en ONNX). Los resultados se contrastan con el estado
-del arte y se discuten las mejoras pendientes.
+El cariotipado (detectar, clasificar y ordenar los cromosomas de una célula en
+metafase) es un procedimiento de rutina en citogenética clínica, hoy manual y lento.
+En este trabajo se desarrolla un pipeline automático sobre el dataset público
+AutoKary2022, integrando preprocesamiento (denoising Non-Local Means y realce de
+contraste CLAHE), segmentación de instancias con Mask R-CNN, registración de cada
+cromosoma a una pose canónica mediante PCA, clasificación con una red VGG16 con
+atención Squeeze-and-Excitation, y ensamblado del cariograma con conteo por par y
+marcado de anomalías. La segmentación alcanza un AP@0.5 del \SI{97.8}{\percent} sobre
+el conjunto de test y la clasificación una exactitud del \SI{87}{\percent} sobre las
+24 clases cromosómicas. Se presenta además una interfaz gráfica en Streamlit que
+ejecuta y visualiza cada etapa.
 
 \vspace{1.5em}
 \hrule
@@ -124,20 +116,6 @@ las 24 clases posibles (1--22, X, Y); y (iii) ordenarlos en la grilla estándar 
 cariograma. Este proceso manual insume entre 30 y 50 minutos por caso y depende de
 personal altamente especializado~\cite{you2023autokary,wang2024fully}, lo que
 motiva su automatización.
-
-Desde la perspectiva del procesamiento de imágenes, el problema encadena varias
-tareas clásicas de la disciplina. El pre-procesamiento busca mejorar la
-relación señal-ruido y el contraste sin destruir el bandeo, mediante estimación de
-ruido, filtrado que preserva bordes~\cite{buades2005nlm} y realce de contraste
-local~\cite{zuiderveld1994clahe}. La segmentación de instancias asigna a
-cada píxel un cromosoma concreto, una tarea que Mask R-CNN~\cite{he2017maskrcnn}
-resuelve combinando detección y segmentación por región. La extracción de
-características y la registración llevan cada cromosoma a una pose canónica
-(vertical, centrada, escalada), lo que se logra estimando su eje principal por
-Análisis de Componentes Principales (PCA)~\cite{jolliffe2016pca}. Finalmente, la
-clasificación asigna a cada cromosoma su etiqueta mediante una red convolucional y
-el ensamblado los ordena en la grilla estándar del cariograma. Este informe recorre
-todas estas etapas del pipeline.
 
 \subsection{Estado del arte}
 
@@ -221,23 +199,18 @@ metafase hasta el cariograma final:
 \text{cariograma}
 \end{equation*}
 
-Una decisión de diseño relevante es que los modelos se ejecutan sobre la imagen
-cruda, no sobre una versión preprocesada. El preprocesamiento se aborda como una
-etapa de caracterización y análisis de la imagen, cuya conclusión justifica
-precisamente esa decisión; los motivos se detallan en la
-Sección~\ref{sec:preproc} y se cuantifican en la Sección~\ref{sec:resultados}.
+Los modelos operan sobre la imagen cruda; el preprocesamiento se trata como una
+etapa de caracterización de la imagen (Sección~\ref{sec:preproc}), fuera de la
+cadena de inferencia.
 
 \subsection{Caracterización de la imagen y estudio de preprocesamiento}
 \label{sec:preproc}
 
-Antes que un paso obligatorio dentro de la cadena de inferencia, el preprocesamiento
-se aborda aquí como una etapa de \textbf{caracterización de la imagen}: se estima el
-ruido, se aplican denoising y realce de contraste, y se mide su efecto de forma
-cuantitativa. El resultado de este estudio (Sección~\ref{sec:resultados}) es el que
-fundamenta la decisión de correr los modelos sobre la imagen cruda. El
-preprocesamiento se implementó en el módulo \texttt{preprocessing.py} y consta de
-tres pasos aplicados en orden: conversión a escala de grises, denoising y realce
-de contraste local.
+El preprocesamiento (módulo \texttt{preprocessing.py}) se aborda como una etapa de
+caracterización de la imagen se estima el ruido y se aplican denoising y
+realce de contraste, midiendo su efecto de forma cuantitativa
+(Sección~\ref{sec:resultados}). Consta de tres pasos aplicados en orden: conversión
+a escala de grises, denoising y realce de contraste local.
 
 \paragraph{Estimación de ruido.} Para cuantificar el nivel de ruido antes y después
 del filtrado se emplea el método de Immerkær~\cite{immerkaer1996noise}, que estima
@@ -263,20 +236,15 @@ más fuerte amplificaba el fondo uniforme en manchas; el valor elegido realza el
 bandeo sin ensuciar el fondo. No se aplica normalización global de intensidad, ya
 que estiraba el rango dinámico y amplificaba el fondo.
 
-\paragraph{Decisión: los modelos operan sobre la imagen cruda.} Tanto el modelo de
-segmentación como el de clasificación se entrenaron sobre imágenes crudas. El
-principio rector es que el preprocesamiento debe ser consistente entre entrenamiento
-e inferencia: aplicar en inferencia una transformación ausente en el entrenamiento
-introduciría un desfasaje entre entrenamiento y test que degradaría el desempeño.
-Por eso, en producción ambos modelos reciben la imagen cruda. Esta decisión se apoya,
-además, en la caracterización de la imagen (Sección~\ref{sec:resultados}): las
-imágenes de AutoKary2022 son microscopía Giemsa profesional con muy poco ruido, de
-modo que el denoising aporta poco y un realce agresivo puede borrar el bandeo G,
-justamente la información que necesita el clasificador. El preprocesamiento conserva,
-no obstante, un rol real: en la interfaz queda disponible como herramienta de
-\textbf{visualización} (comparar original y realzada, observar el ruido estimado
-antes y después) y como recurso opcional para imágenes claramente más degradadas que
-el conjunto de entrenamiento.
+\paragraph{Decisión: los modelos operan sobre la imagen cruda.} La razón surge de la
+caracterización de la imagen (Sección~\ref{sec:resultados}): las imágenes de
+AutoKary2022 son microscopía Giemsa profesional con muy poco ruido, de modo que el
+denoising tiene poco por corregir; y un realce de contraste agresivo tiende a
+deteriorar el bandeo G, justamente la característica fina que la segmentación y la
+clasificación necesitan preservar. Como el preprocesamiento no ofrece margen de
+mejora pero sí riesgo de degradar esa información, los modelos se entrenan y ejecutan
+sobre la imagen cruda. El preprocesamiento se conserva como herramienta de visualización a fines de comparar la
+imagen original y la realzada para observar el ruido estimado antes y después.
 
 \subsection{Segmentación de instancias (Mask R-CNN)}
 \label{sec:segmentacion}
@@ -319,7 +287,7 @@ de aprendizaje. La evaluación se realizó con el protocolo COCO
 \end{table}
 
 Para su uso en la interfaz, el modelo entrenado (\texttt{model\_final.pth}) se
-exportó a \textbf{TorchScript} mediante el trazado del grafo en CPU, verificando la
+exportó a TorchScript mediante el trazado del grafo en CPU, verificando la
 paridad de resultados frente al predictor de Detectron2. Esto permite ejecutar la
 segmentación con sólo la librería \texttt{torch}, sin necesidad de instalar
 Detectron2 (que no es instalable en el entorno local por falta de compilador y GPU).
@@ -332,25 +300,25 @@ produce un recorte individual normalizado a \(224\times224\) píxeles. El
 procedimiento, por cada instancia, es:
 
 \begin{enumerate}[topsep=2pt,itemsep=1pt]
-  \item Se extrae el contorno de la máscara y se calcula su \textbf{eje principal}
+  \item Se extrae el contorno de la máscara y se calcula su eje principal
         por PCA~\cite{jolliffe2016pca}: se toma el autovector asociado al mayor
         autovalor de la matriz de covarianza de los puntos del contorno. Su
         dirección define la orientación del cromosoma y la longitud de la
         proyección sobre él estima su tamaño.
-  \item Se recorta el cromosoma según su \textit{bounding box}, aislándolo del fondo
+  \item Se recorta el cromosoma según su bounding box, aislándolo del fondo
         con la máscara (fondo blanco).
-  \item Se \textbf{rota} a orientación vertical según el ángulo del eje principal.
+  \item Se rota a orientación vertical según el ángulo del eje principal.
         Esta rotación a una plantilla canónica común constituye la
         registración: todos los cromosomas quedan en la misma pose,
         eliminando la variabilidad por orientación.
-  \item Se \textbf{escala} preservando el tamaño relativo entre cromosomas (el
+  \item Se escala preservando el tamaño relativo entre cromosomas (el
         escalado es global respecto del cromosoma más largo de la imagen) y se
-        \textbf{centra} en un lienzo de \(224\times224\).
+        centra en un lienzo de \(224\times224\).
 \end{enumerate}
 
-Los recortes se generan sobre la imagen cruda (misma entrada con la que se entrenó
-el clasificador) y tomando los puntos desde la máscara predicha, de modo que la
-salida de esta etapa quede estandarizada para las etapas posteriores del pipeline.
+Los recortes se generan sobre la imagen cruda y tomando los puntos desde la máscara
+predicha, de modo que la salida de esta etapa quede estandarizada para las etapas
+posteriores del pipeline.
 
 \subsection{Clasificación}
 \label{sec:clasificacion}
@@ -450,9 +418,9 @@ de cada clase, y el resaltado de las anomalías detectadas.
 \subsection{Interfaz gráfica}
 \label{sec:interfaz}
 
-Se desarrolló una interfaz gráfica en \textbf{Streamlit}~\cite{streamlit}
+Se desarrolló una interfaz gráfica en Streamlit~\cite{streamlit}
 (Figura~\ref{fig:interfaz}) que ejecuta el pipeline y visualiza cada etapa
-del procesamiento. Streamlit se eligió por sobre la implementación inicial en Flask
+del procesamiento. Se eligió Streamlit
 porque permite mostrar el procesamiento paso a paso (columnas, imágenes,
 deslizadores) con muy poco código, lo que se ajusta al requisito de visualizar
 el procesamiento realizado.
@@ -495,17 +463,16 @@ secuencial:
 
 Sobre una muestra del conjunto de test se cuantificó el efecto del preprocesamiento
 canónico (NLM con \(h=7\) + CLAHE con \texttt{clip}\,=\,1.5). El ruido estimado por
-el método de Immerkær es muy bajo ya en la imagen original y disminuye con el
-filtrado (\(\sigma \approx 0.7 \rightarrow 0.2\) en promedio), lo que indica que las
-imágenes parten prácticamente limpias y el margen de mejora del denoising es
-acotado. El índice de similitud estructural SSIM~\cite{wang2004ssim} entre la imagen
-original en escala de grises y la preprocesada es alto (\(\approx0.95\)),
-confirmando que el realce preserva la estructura del bandeo G diagnóstico; el PSNR
-moderado (\(\approx\SI{21}{dB}\)) refleja, en cambio, el cambio de contraste que
-introduce CLAHE de forma deliberada. En conjunto, estos valores muestran que
-preprocesar aporta poco a la calidad de la imagen; junto con el principio de
-consistencia entre entrenamiento e inferencia, fundamentan la decisión de correr los
-modelos sobre la imagen cruda (Sección~\ref{sec:preproc}).
+el método de Immerkær es muy bajo ya en la imagen original y apenas disminuye con el
+filtrado (\(\sigma \approx 0.7 \rightarrow 0.2\) en promedio): las imágenes parten
+prácticamente limpias, por lo que el denoising tiene poco por corregir. El SSIM~\cite{wang2004ssim}
+entre la imagen original en escala de grises y la preprocesada es alto
+(\(\approx0.95\)) y el PSNR moderado (\(\approx\SI{21}{dB}\)) refleja el cambio de
+contraste que introduce CLAHE. El problema es que ese realce, sobre todo con
+parámetros más agresivos, tiende a atenuar el bandeo G, que es justamente la
+característica fina de la que dependen la segmentación y la clasificación. Como no
+hay margen de mejora pero sí riesgo de deteriorar esa información, los modelos se
+ejecutan sobre la imagen cruda (Sección~\ref{sec:preproc}).
 
 \subsection{Segmentación}
 
@@ -545,11 +512,9 @@ solapamiento exigentes.
 \subsection{Extracción y registración}
 
 La etapa de extracción produce, por cada instancia segmentada, un recorte de
-\(224\times224\) con el cromosoma aislado, rotado a orientación vertical y escalado
-preservando su tamaño relativo (Figura~\ref{fig:interfaz}). La rectificación por eje
-principal elimina la variabilidad por orientación y deja los cromosomas en una pose
-canónica homogénea, condición necesaria para las etapas posteriores del
-pipeline.
+\(224\times224\) con el cromosoma aislado, rotado a vertical y escalado preservando
+su tamaño relativo (Figura~\ref{fig:interfaz}), dejándolo en una pose canónica
+homogénea para las etapas siguientes.
 
 \subsection{Clasificación}
 \label{sec:res-clasif}
@@ -636,13 +601,6 @@ con el modelo original.
   \label{fig:cariograma}
 \end{figure}
 
-\subsection{Interfaz}
-
-La interfaz ejecuta de punta a punta las etapas de pre-procesamiento, segmentación
-y extracción/registración, y visualiza cada resultado intermedio
-(Figura~\ref{fig:interfaz}). La segmentación corre sobre CPU en pocos segundos
-gracias al modelo exportado a TorchScript.
-
 % ================================================================== %
 \section{Conclusiones}
 \label{sec:conclusiones}
@@ -685,17 +643,23 @@ clase minoritaria.
   \end{tabular}
 \end{table}
 
-\paragraph{Posibles mejoras.} Se identifican las siguientes líneas de trabajo:
+\paragraph{Posibles mejoras.} Se identifican dos líneas principales de trabajo:
+
 \begin{itemize}[topsep=2pt,itemsep=1pt]
-  \item \textbf{Estudio de ablación} del pre-procesamiento sobre la segmentación,
-        confirmando cuantitativamente su robustez a la variación de la entrada.
-  \item \textbf{Mejorar la clasificación} incorporando \textit{data augmentation} y
-        más muestras de las clases minoritarias, que concentran el error residual.
-  \item \textbf{Marcado automático de anomalías numéricas} en el cariograma (por
-        ejemplo, un número de instancias por clase distinto de dos).
-  \item \textbf{Unificar el entorno de ejecución}: la segmentación usa PyTorch y la
-        clasificación TensorFlow; reexportar el clasificador simplificaría el
-        despliegue.
+  \item \textbf{Ablación del preprocesamiento.} Evaluar los modelos con la imagen
+        cruda frente a la preprocesada, midiendo AP en segmentación y exactitud en
+        clasificación sobre el conjunto de test. Esto convertiría en un resultado
+        cuantitativo la decisión de operar sobre la imagen cruda: permitiría medir
+        cuánto mejora o empeora cada etapa al preprocesar y a partir de qué
+        intensidad de filtrado empieza a notarse la pérdida del bandeo G.
+  \item \textbf{Mejorar la clasificación.} El error residual se concentra en los
+        cromosomas pequeños de morfología parecida (16 a 22) y en la clase
+        minoritaria Y, que aporta muy pocas muestras. Se proponen dos vías
+        complementarias: aumentación de datos (rotaciones, deformaciones elásticas y
+        variaciones de intensidad) para exponer al modelo a más variabilidad sin
+        recolectar imágenes nuevas, y balancear el conjunto sumando o replicando
+        muestras de las clases minoritarias para que el clasificador deje de
+        sesgarse hacia las mayoritarias.
 \end{itemize}
 
 En síntesis, el trabajo integra un flujo automático de cariotipado con una
@@ -703,11 +667,9 @@ segmentación de nivel de estado del arte, una registración que estandariza los
 cromosomas y un clasificador que alcanza un 87\,\% de exactitud, y aporta una
 interfaz que hace tangible cada etapa del procesamiento de imágenes involucrado.
 
-\clearpage
 \bibliographystyle{IEEEtran}
 \bibliography{referencias}
 
-\clearpage
 % ================================================================== %
 \appendix
 \section{Anexo: detalle de la clasificación}
