@@ -91,10 +91,7 @@ with c1:
 with c2:
     st.image(steps["result"], caption="Preprocesada", use_container_width=True)
 st.caption(
-    f"Ruido estimado (σ, método de Immerkær): {steps['sigma_in']:.2f} → {steps['sigma_out']:.2f}. "
-    "El preprocesamiento es una herramienta de visualización: los modelos se entrenaron "
-    "sobre la imagen cruda, así que segmentación y clasificación se ejecutan sobre la "
-    "imagen cruda (por consistencia train/inferencia) salvo que lo cambies en la barra lateral."
+    f"Ruido estimado (σ): {steps['sigma_in']:.2f} → {steps['sigma_out']:.2f}"
 )
 
 seg_input = steps["result"] if feed_preproc_to_seg else image
