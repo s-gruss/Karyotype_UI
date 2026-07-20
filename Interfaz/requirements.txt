@@ -11,5 +11,8 @@ torchvision
 #   python -m pip install 'git+https://github.com/facebookresearch/detectron2.git'
 # Ver: https://detectron2.readthedocs.io/en/latest/tutorials/install.html
 
-# Clasificación (se integrará con el modelo final de Kiwi)
-# tensorflow
+# Clasificación: el clasificador VGG16+SE corre vía ONNX (no requiere TensorFlow).
+onnxruntime
+# TensorFlow solo es necesario para regenerar el .onnx desde el .h5
+# (ver convert_classifier_to_onnx.py); no hace falta para correr la interfaz.
+# tensorflow-cpu==2.15.1

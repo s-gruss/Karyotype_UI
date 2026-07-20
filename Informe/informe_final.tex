@@ -198,8 +198,7 @@ El pipeline de cariotipado (Figura~\ref{fig:pipeline}) encadena las siguientes
 etapas, desde la imagen de metafase hasta el cariograma final:
 
 \begin{equation*}
-\text{imagen} \rightarrow
-\underbrace{\text{pre-proc.}}_{\text{NLM + CLAHE}} \rightarrow
+\text{imagen cruda} \rightarrow
 \underbrace{\text{segment.}}_{\text{Mask R-CNN}} \rightarrow
 \underbrace{\text{extr. + reg.}}_{\text{PCA}} \rightarrow
 \underbrace{\text{clasif.}}_{\text{CNN}} \rightarrow
@@ -209,21 +208,29 @@ etapas, desde la imagen de metafase hasta el cariograma final:
 \begin{figure}[H]
   \centering
   \figplaceholder[0.9\linewidth]{2.2cm}
-  \caption{Esquema del pipeline. La segmentación opera sobre la imagen
-  cruda; los recortes individuales se obtienen de la imagen pre-procesada.}
+  \caption{Esquema del pipeline. Los modelos operan sobre la imagen cruda. El
+  preprocesamiento se estudia como etapa de caracterización de la imagen y queda
+  disponible en la interfaz como herramienta de visualización, fuera de la cadena
+  de inferencia.}
   \label{fig:pipeline}
 \end{figure}
 
-Una decisión de diseño relevante es dónde se aplica el pre-procesamiento. La
-segmentación se ejecuta sobre la imagen cruda, mientras que el
-pre-procesamiento se reserva para la generación de los recortes individuales de
-cada cromosoma. Los motivos se detallan en la Sección~\ref{sec:preproc}.
+Una decisión de diseño relevante es que los modelos se ejecutan sobre la imagen
+cruda, no sobre una versión preprocesada. El preprocesamiento se aborda como una
+etapa de caracterización y análisis de la imagen, cuya conclusión justifica
+precisamente esa decisión; los motivos se detallan en la
+Sección~\ref{sec:preproc} y se cuantifican en la Sección~\ref{sec:resultados}.
 
-\subsection{Pre-procesamiento}
+\subsection{Caracterización de la imagen y estudio de preprocesamiento}
 \label{sec:preproc}
 
-El pre-procesamiento se implementó en el módulo \texttt{preprocessing.py} y consta
-de tres pasos aplicados en orden: conversión a escala de grises, denoising y realce
+Antes que un paso obligatorio dentro de la cadena de inferencia, el preprocesamiento
+se aborda aquí como una etapa de \textbf{caracterización de la imagen}: se estima el
+ruido, se aplican denoising y realce de contraste, y se mide su efecto de forma
+cuantitativa. El resultado de este estudio (Sección~\ref{sec:resultados}) es el que
+fundamenta la decisión de correr los modelos sobre la imagen cruda. El
+preprocesamiento se implementó en el módulo \texttt{preprocessing.py} y consta de
+tres pasos aplicados en orden: conversión a escala de grises, denoising y realce
 de contraste local.
 
 \paragraph{Estimación de ruido.} Para cuantificar el nivel de ruido antes y después
@@ -250,17 +257,20 @@ más fuerte amplificaba el fondo uniforme en manchas; el valor elegido realza el
 bandeo sin ensuciar el fondo. No se aplica normalización global de intensidad, ya
 que estiraba el rango dinámico y amplificaba el fondo.
 
-\paragraph{Justificación del punto de aplicación.} El modelo de segmentación se
-entrenó sobre imágenes crudas, y su \textit{framework} (Detectron2) aplica
-internamente su propia normalización de intensidad (\texttt{PIXEL\_MEAN} /
-\texttt{PIXEL\_STD}) de manera idéntica en entrenamiento e inferencia. El principio
-rector es que el pre-procesamiento debe ser consistente entre entrenamiento
-e inferencia: como la segmentación se entrenó sobre crudo, en producción recibe
-crudo, evitando un desfasaje entre entrenamiento y test. El valor del
-pre-procesamiento reside entonces en (a) la visualización, (b) la generación de los
-recortes individuales de cada cromosoma y (c) la robustez frente a imágenes más
-ruidosas que el conjunto de entrenamiento. La interfaz permite, opcionalmente,
-segmentar sobre la imagen pre-procesada para verificar empíricamente esta robustez.
+\paragraph{Decisión: los modelos operan sobre la imagen cruda.} Tanto el modelo de
+segmentación como el de clasificación se entrenaron sobre imágenes crudas. El
+principio rector es que el preprocesamiento debe ser consistente entre entrenamiento
+e inferencia: aplicar en inferencia una transformación ausente en el entrenamiento
+introduciría un desfasaje entre entrenamiento y test que degradaría el desempeño.
+Por eso, en producción ambos modelos reciben la imagen cruda. Esta decisión se apoya,
+además, en la caracterización de la imagen (Sección~\ref{sec:resultados}): las
+imágenes de AutoKary2022 son microscopía Giemsa profesional con muy poco ruido, de
+modo que el denoising aporta poco y un realce agresivo puede borrar el bandeo G,
+justamente la información que necesita el clasificador. El preprocesamiento conserva,
+no obstante, un rol real: en la interfaz queda disponible como herramienta de
+\textbf{visualización} (comparar original y realzada, observar el ruido estimado
+antes y después) y como recurso opcional para imágenes claramente más degradadas que
+el conjunto de entrenamiento.
 
 \subsection{Segmentación de instancias (Mask R-CNN)}
 \label{sec:segmentacion}
@@ -332,9 +342,9 @@ procedimiento, por cada instancia, es:
         \textbf{centra} en un lienzo de \(224\times224\).
 \end{enumerate}
 
-Los recortes se generan sobre la imagen pre-procesada y tomando los puntos desde la
-máscara predicha, de modo que la salida de esta etapa quede estandarizada para las
-etapas posteriores del pipeline.
+Los recortes se generan sobre la imagen cruda (misma entrada con la que se entrenó
+el clasificador) y tomando los puntos desde la máscara predicha, de modo que la
+salida de esta etapa quede estandarizada para las etapas posteriores del pipeline.
 
 \subsection{Clasificación}
 \label{sec:clasificacion}
@@ -347,10 +357,10 @@ de las 24 clases cromosómicas (1--22, X, Y) mediante una red neuronal convoluci
 individuales generados con el mismo procedimiento de registración de la
 Sección~\ref{sec:extraccion} (aislamiento por máscara sobre fondo blanco,
 rectificación del eje principal por PCA, escala global y centrado a
-\(224\times224\)), aplicado en este caso sobre las \emph{máscaras de referencia} de
+\(224\times224\)), aplicado en este caso sobre las máscaras de referencia de
 AutoKary2022. Se obtuvieron \num{23438} recortes de entrenamiento y \num{2874} de
 test, organizados en 24 carpetas (una por clase). Las imágenes se mantienen en RGB
-—las redes preentrenadas esperan tres canales— y la única operación sobre
+(las redes preentrenadas esperan tres canales) y la única operación sobre
 intensidades es el reescalado a \([0,1]\) que aplica el generador de datos
 (\texttt{ImageDataGenerator}) en tiempo de entrenamiento; no se aplicó normalización
 adicional de intensidad ni \textit{data augmentation}.
@@ -407,11 +417,29 @@ de la clase minoritaria), \textit{label smoothing} de 0.1 y regularización \(L_
 \subsection{Ensamblado del cariograma}
 \label{sec:cariograma}
 
-A partir de la clase asignada a cada cromosoma, esta etapa los ordena en la grilla
-estándar del cariograma, agrupándolos por pares.
+A partir de la clase asignada a cada cromosoma, esta etapa (módulo
+\texttt{karyogram.py}) los ordena en la grilla estándar del cariograma. El
+procedimiento es:
 
-\pendiente{procedimiento de ensamblado, ordenamiento y conteo de pares, con el
-marcado de posibles anomalías numéricas.}
+\begin{enumerate}[topsep=2pt,itemsep=1pt]
+  \item \textbf{Mapeo de clases.} La salida del clasificador es un índice 0--23 que
+        no coincide con el número de cromosoma, porque el generador de datos de Keras
+        (\texttt{flow\_from\_directory}) ordena las clases alfabéticamente como
+        cadenas ('1','10','11',\ldots,'2','20',\ldots). Se aplica el mapeo inverso
+        exacto para recuperar el número real, con las clases 23 y 24 asignadas a X e
+        Y.
+  \item \textbf{Agrupamiento y ordenamiento.} Los cromosomas se agrupan por clase y
+        se colocan en la grilla estándar: autosomas 1--22 por tamaño decreciente,
+        seguidos de los cromosomas sexuales X e Y. Los homólogos de cada par se
+        ordenan por tamaño para una disposición prolija.
+  \item \textbf{Conteo y detección de anomalías.} Se cuentan las instancias por
+        clase y se marca como posible anomalía numérica todo autosoma cuyo conteo sea
+        distinto de dos (el conteo de X/Y depende del sexo y no se marca por
+        defecto).
+\end{enumerate}
+
+El resultado es una imagen única con el cariograma ordenado, la etiqueta y el conteo
+de cada clase, y el resaltado de las anomalías detectadas.
 
 \subsection{Sobre la etapa de \textit{tracking}}
 
@@ -447,6 +475,10 @@ secuencial:
         imagen, con el conteo de cromosomas. Corre el modelo TorchScript.
   \item \textbf{Extracción y rectificación}: galería de los cromosomas recortados,
         rotados a vertical y escalados a \(224\times224\).
+  \item \textbf{Clasificación}: cada recorte etiquetado con su tipo (1--22, X, Y) y
+        la confianza del modelo. Corre el clasificador exportado a ONNX.
+  \item \textbf{Cariograma}: ensamblado ordenado en la grilla estándar, con el
+        conteo por par y el aviso de posibles anomalías numéricas.
 \end{enumerate}
 
 \begin{figure}[H]
@@ -462,16 +494,19 @@ secuencial:
 \label{sec:resultados}
 % ================================================================== %
 
-\subsection{Pre-procesamiento}
+\subsection{Caracterización del preprocesamiento}
+\label{sec:res-preproc}
 
-Sobre imágenes reales del conjunto, el pre-procesamiento canónico (NLM con
+Sobre imágenes reales del conjunto, el preprocesamiento canónico (NLM con
 \(h=7\) + CLAHE con \texttt{clip}\,=\,1.5) reduce el ruido estimado preservando la
 estructura de las imágenes. La comparación cuantitativa entre la imagen original en
-escala de grises y la pre-procesada arroja valores altos de PSNR
+escala de grises y la preprocesada arroja valores altos de PSNR
 (\(\approx\SI{33}{dB}\)) y de índice de similitud estructural
-SSIM~\cite{wang2004ssim} (\(\approx0.97\)), lo que confirma que el filtrado limpia
-el fondo sin degradar el bandeo G diagnóstico. Esta caracterización valida la etapa
-como un realce controlado y no destructivo.
+SSIM~\cite{wang2004ssim} (\(\approx0.97\)): el filtrado limpia el fondo sin degradar
+el bandeo G diagnóstico. Estos valores confirman que el ruido de partida es muy bajo,
+de modo que el margen de mejora del denoising es acotado; junto con el principio de
+consistencia entre entrenamiento e inferencia, esto fundamenta la decisión de correr
+los modelos sobre la imagen cruda (Sección~\ref{sec:preproc}).
 
 \subsection{Segmentación}
 
@@ -524,8 +559,8 @@ La Tabla~\ref{tab:clasif-resultados} compara el desempeño de las configuracione
 exploradas sobre el conjunto de test (\num{2874} recortes). El \textit{backbone}
 resulta determinante: VGG16 (85--87\,\%) supera ampliamente a ResNet-50
 (\(\approx\)39\,\%), cuyo bajo rendimiento se atribuye al \textit{fine-tuning}
-parcial de sus capas de \textit{Batch Normalization} —cuya estadística se degrada al
-descongelarlas— y a un entrenamiento más corto. La atención SE por sí sola aporta
+parcial de sus capas de \textit{Batch Normalization} (cuya estadística se degrada al
+descongelarlas) y a un entrenamiento más corto. La atención SE por sí sola aporta
 poco (la versión v1 incluso descendió a 81\,\% por \textit{callbacks} demasiado
 agresivos), pero, bien ajustada, supera al \textit{baseline}. La mayor ganancia
 proviene de la regularización y el balanceo de clases: el modelo final alcanza una
@@ -550,8 +585,6 @@ proviene de la regularización y el balanceo de clases: el modelo final alcanza 
   \end{tabular}
 \end{table}
 
-calculó desde la diagonal de su matriz de confusión.\par}
-
 El entrenamiento del modelo final se detuvo por \textit{early stopping} restaurando
 los pesos de la mejor época; sus curvas de exactitud y pérdida
 (Figura~\ref{fig:clasif-curvas}) muestran convergencia estable con un moderado
@@ -559,8 +592,8 @@ sobreajuste (exactitud de entrenamiento \(\approx\)99\,\% frente a \(\approx\)87
 de validación). El análisis por cromosoma (Tabla~\ref{tab:clasif-report},
 Anexo~\ref{anexo:clasif}) revela que el error residual se concentra en los
 cromosomas pequeños de morfología similar (16 a 22), la parte históricamente más
-difícil del cariotipado; el cromosoma Y —la clase minoritaria, con solo 24 muestras
-de test— es el de menor desempeño (F1 = 0.69) pese al balanceo por pesos.
+difícil del cariotipado; el cromosoma Y (la clase minoritaria, con solo 24 muestras
+de test) es el de menor desempeño (F1 = 0.69) pese al balanceo por pesos.
 
 \begin{figure}[H]
   \centering
@@ -579,7 +612,26 @@ de test— es el de menor desempeño (F1 = 0.69) pese al balanceo por pesos.
 
 \subsection{Cariograma}
 
-\pendiente{ejemplo de cariograma ensamblado a partir de una imagen de test.}
+Integrando todas las etapas, el pipeline arma el cariograma de forma automática. La
+Figura~\ref{fig:cariograma} muestra un ejemplo sobre una metafase de test: los 46
+cromosomas quedan segmentados, rectificados, clasificados y ordenados en la grilla
+estándar, produciendo un cariotipo femenino normal (46,XX) sin anomalías numéricas.
+En esa imagen la clasificación acierta el \SI{97.8}{\percent} de los cromosomas; el
+desempeño varía por imagen y en promedio se mantiene en línea con la exactitud del
+clasificador reportada en la Sección~\ref{sec:res-clasif}. Para su uso en la
+interfaz, el clasificador se exporta a ONNX y corre con \texttt{onnxruntime}, sin
+necesidad de TensorFlow (misma estrategia que la segmentación con TorchScript),
+verificando la paridad de salidas con el modelo original.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\linewidth]{cariograma_ejemplo.png}
+  \caption{Cariograma ensamblado automáticamente por el pipeline a partir de una
+  metafase de test. Cada celda muestra el par de homólogos rectificados, con el
+  número de cromosoma y el conteo de instancias. Los cromosomas sexuales (X, Y) se
+  ubican al final; el conteo por par permite marcar anomalías numéricas.}
+  \label{fig:cariograma}
+\end{figure}
 
 \subsection{Interfaz}
 
